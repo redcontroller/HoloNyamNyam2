@@ -27,16 +27,17 @@ import Carousel from '../../Carousels/Carousel';
 export default function FeedCreate() {
   // 데이터
   // eslint-disable-next-line no-unused-vars
+  // 6개의 state는 useReducer로 관리할 수 있음
   const [feed, setFeed] = useRecoilState(feedState);
   const [isValid, setIsValid] = useState(false);
   const [uploadPreview, setUploadPreview] = useState(
     feed.type === 'edit' ? feed.images : [],
   );
   const [content, setContent] = useState(feed.type === 'edit' ? feed.text : '');
-  // const [imgUrl, setImgUrl] = useState(feed.type === 'edit' ? feed.images : []);
   const [imgFile, setImgFile] = useState([]);
   const token = sessionStorage.getItem('token');
   const username = sessionStorage.getItem('accountname');
+  // 3개의 Ref를 Map 객체를 가진 Ref 1개로 관리할 수 있음
   const dragItem = useRef(); // 드래그할 아이템의 인덱스
   const dragOverItem = useRef();
   const fileInputRef = useRef(null);
@@ -83,7 +84,6 @@ export default function FeedCreate() {
     try {
       const newUploadPreview = [...uploadPreview]; // 기존 images
       // 새로 추가할 이미지가 있다면,
-      // window.console.log(imgFile);
       if (imgFile) {
         const uploadedImageUrls = [];
         const files = imgFile.filter((img) => img !== undefined);
@@ -100,16 +100,13 @@ export default function FeedCreate() {
           }
           uploadedImageUrls.push(imageUrl.trim());
         }
-        // window.console.log(uploadedImageUrls);
         const notUrlArr = newUploadPreview
           .map((e, i) => (e.trim().startsWith('https://') ? null : i))
           .filter((v) => v !== null);
-        // window.console.log(notUrlArr);
         for (let idx in notUrlArr) {
           newUploadPreview[notUrlArr[idx]] = uploadedImageUrls[0];
           uploadedImageUrls.shift();
         }
-        // window.console.log(newUploadPreview);
       }
 
       const res = await feedEditApi({
@@ -142,7 +139,7 @@ export default function FeedCreate() {
     }
   };
 
-  // 계산: 텍스트 콘텐츠 또는 업로드된 이미지가 있는지 검사하는 함수
+  // 액션: 텍스트와 이미지가 있는지 검사하는 함수
   const checkContent = () => {
     if (
       (!content || content.trim().length === 0) &&
@@ -244,8 +241,8 @@ export default function FeedCreate() {
   };
 
   // 계산: Base64 타입으로 인코딩된 이미지를 디코딩하고, 이름이 image.jpg인 파일 객체를 반환하는 함수
-  const formDataHandler = async (dataURI) => {
-    const byteString = atob(dataURI.split(',')[1]);
+  const formDataHandler = async (base64Data) => {
+    const byteString = atob(base64Data.split(',')[1]);
     const arrayBuffer = new ArrayBuffer(byteString.length);
     const encodingArray = new Uint8Array(arrayBuffer);
     for (let i = 0; i < byteString.length; i++) {
@@ -336,8 +333,8 @@ export default function FeedCreate() {
               />
               <UploadImg
                 draggable
-                onDragStart={(e) => dragStart(e, index)}
-                onDragEnter={(e) => dragEnter(e, index)}
+                onDragStart={() => dragStart(index)}
+                onDragEnter={() => dragEnter(index)}
                 onDragEnd={drop}
                 onDragOver={(e) => e.preventDefault()}
                 key={index}
